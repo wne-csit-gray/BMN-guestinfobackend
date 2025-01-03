@@ -1,0 +1,57 @@
+version: "4.0"
+services:
+  app:
+    # Using a Dockerfile is optional, but included for completeness.
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args: 
+        VARIANT: '18'
+
+    volumes:
+      # This is where VS Code should expect to find your project's source code and the value of "workspaceFolder" in .devcontainer/devcontainer.json
+      - ..:/workspace:cached
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: /bin/sh -c "while sleep 1000; do :; done"  
+
+    # Runs app on the same network as the service container, allows "forwardPorts" in devcontainer.json function.
+    # network_mode: service:app
+
+    
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally. 
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+    # Uncomment the next line to use a non-root user for all processes - See https://aka.ms/vscode-remote/containers/non-root for details.
+    # user: vscode
+  backend:
+    image: guestinfobackend
+    build:
+      context: ../
+      dockerfile: src/Dockerfile
+    environment:
+      BASE_URL: http://localhost:10350/
+      MONGO_URI: mongodb://localhost
+      RABBITMQ_URL: amqp://localhost
+      TIME_OUT: 20000
+    depends_on:
+      - backend-database
+      - rabbitmq
+    network_mode: service:app
+
+  backend-database:
+    image: mongo:4
+    network_mode: service:app
+
+# https://docs.docker.com/compose/compose-file/
+  rabbitmq:
+    image: 'rabbitmq:3.6-management-alpine'
+    environment:
+      # The location of the RabbitMQ server.  "amqp" is the protocol;
+      # "rabbitmq" is the hostname.  Note that there is not a guarantee
+      # that the server will start first!  Telling the pika client library
+      # to try multiple times gets around this ordering issue.
+      AMQP_URL: 'amqp://rabbitmq?connection_attempts=5&retry_delay=5'
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    network_mode: service:app

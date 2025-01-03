@@ -1,0 +1,12 @@
+include:
+  - remote: https://gitlab.com/LibreFoodPantry/common-services/tools/pipeline/-/raw/main/source/gitlab-ci/pipeline.yml
+
+variables:
+  DISABLE_JOBS: ""
+  PIPELINE_IMAGE_PLATFORMS: "linux/amd64,linux/arm64"
+
+  # The local name of the Docker image built by the build command and
+  # tested by the test command. Ignored, if build doesn't produce an image.
+  IMAGE_NAME: $CI_PROJECT_NAME:latest
+
+  BUILD_COMMAND: ./bin/build.sh
